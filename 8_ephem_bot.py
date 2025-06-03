@@ -13,6 +13,7 @@
 
 """
 import logging
+import ephem
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
@@ -21,13 +22,30 @@ logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s',
                     filename='bot.log')
 
 
-PROXY = {
-    'proxy_url': 'socks5://t1.learn.python.ru:1080',
-    'urllib3_proxy_kwargs': {
-        'username': 'learn',
-        'password': 'python'
-    }
-}
+# PROXY = {
+#     'proxy_url': 'socks5://t1.learn.python.ru:1080',
+#     'urllib3_proxy_kwargs': {
+#         'username': 'learn',
+#         'password': 'python'
+#     }
+# }
+
+
+def get_planet_locate(update, context):
+    planets = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']
+    planet_name = update.message.text.split()[-1]
+
+    if planet_name in planets:
+        planet_class = getattr(ephem, planet_name)
+        now = ephem.now()
+        planet = planet_class(now)
+        const = ephem.constellation(planet)
+        text = f"Планета {planet_name} сейчас находится в созвездии {const[1]}"
+        update.message.reply_text(text)
+        return
+    else:
+        update.message.reply_text('Такой планеты нет')
+
 
 
 def greet_user(update, context):
@@ -37,17 +55,19 @@ def greet_user(update, context):
 
 
 def talk_to_me(update, context):
-    user_text = update.message.text
-    print(user_text)
+    text = update.message.text
+    print(text)
     update.message.reply_text(text)
 
 
 def main():
-    mybot = Updater("КЛЮЧ, КОТОРЫЙ НАМ ВЫДАЛ BotFather", request_kwargs=PROXY, use_context=True)
+    mybot = Updater("7559528367:AAGoC771Bw57szotUYlQJ6o6_B_-N2oPtPM", use_context=True)
 
     dp = mybot.dispatcher
     dp.add_handler(CommandHandler("start", greet_user))
+    dp.add_handler(CommandHandler("planet", get_planet_locate))
     dp.add_handler(MessageHandler(Filters.text, talk_to_me))
+
 
     mybot.start_polling()
     mybot.idle()
